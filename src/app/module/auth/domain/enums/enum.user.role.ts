@@ -1,0 +1,5 @@
+export enum UseRole {
+  ADMIN = "ADMIN",
+  RESTAURATEUR = "RESTAURATEUR",
+  DELIVERY = "DELIVERY",
+}
