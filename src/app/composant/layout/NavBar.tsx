@@ -189,7 +189,7 @@ export function NavBar() {
             className="flex flex-col items-center justify-center flex-1 py-2 text-gray-600 hover:text-orange-600 active:scale-95 transition-all"
           >
             <Search size={24} strokeWidth={2} />
-            <span className="text-xs font-medium mt-1">Recherche</span>
+            <span className="text-xs font-medium mt-1">search</span>
           </Link>
           {/* Devenir Restaurateur */}
           <Link
@@ -232,7 +232,6 @@ export function NavBar() {
           )}
         </div>
       </nav>
-
       {/* Menu Modal Mobile (profil utilisateur) */}
       {isMenuOpen && user && (
         <>
@@ -241,7 +240,6 @@ export function NavBar() {
             className="md:hidden fixed inset-0 bg-black/50 z-40 animate-in fade-in duration-200"
             onClick={() => setIsMenuOpen(false)}
           />
-
           {/* Menu Slide Up */}
           <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 animate-in slide-in-from-bottom duration-300 pb-20">
             <div className="p-6 space-y-4">
