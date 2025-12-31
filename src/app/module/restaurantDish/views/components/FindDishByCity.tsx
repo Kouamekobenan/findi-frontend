@@ -183,9 +183,6 @@ export const DishExplorer = () => {
                 Plats à{" "}
                 <span className="text-orange-500 capitalize">{activeCity}</span>
               </h2>
-              <p className="text-sm sm:text-base text-gray-500 mt-1">
-                {filteredDishes.length} délice(s) trouvé(s)
-              </p>
             </div>
           </div>
           {loading ? (
@@ -200,7 +197,7 @@ export const DishExplorer = () => {
           ) : (
             <>
               {filteredDishes.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-6 lg:gap-8">
+                <div className="grid mb-8 md:mb-2 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-6 lg:gap-8">
                   {filteredDishes.map((dish) => (
                     <article
                       key={dish.id}

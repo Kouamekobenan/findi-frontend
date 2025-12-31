@@ -50,7 +50,6 @@ export function NavBar() {
                 href="/"
                 className="text-2xl font-black tracking-tighter text-orange-600"
               >
-                {/* FINDI<span className="text-gray-900">.</span> */}
                 <div className="mb-8 mt-14 animate-fade-in-up">
                   <div className="inline-block relative">
                     <div className="absolute inset-0 bg-orange-400 rounded-full filter blur-2xl opacity-30 animate-pulse"></div>
@@ -154,7 +153,6 @@ export function NavBar() {
             href="/"
             className="text-2xl font-black tracking-tighter text-orange-600"
           >
-            {/* FINDI<span className="text-gray-900">.</span> */}
             <div className="mb-8 mt-14 animate-fade-in-up">
               <div className="inline-block relative">
                 <div className="absolute inset-0 bg-orange-400 rounded-full filter blur-2xl opacity-30 animate-pulse"></div>
@@ -171,6 +169,7 @@ export function NavBar() {
           </Link>
         </div>
       </div>
+
       {/* Bottom Navigation Mobile */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 shadow-2xl">
         <div className="flex justify-around items-center h-16 px-2">
@@ -191,6 +190,7 @@ export function NavBar() {
             <Search size={24} strokeWidth={2} />
             <span className="text-xs font-medium mt-1">search</span>
           </Link>
+
           {/* Devenir Restaurateur */}
           <Link
             href="/module/restaurants/views"
@@ -206,7 +206,6 @@ export function NavBar() {
             className="flex flex-col items-center justify-center flex-1 py-2 text-gray-600 hover:text-orange-600 active:scale-95 transition-all"
           >
             <MessageCircle size={24} strokeWidth={2} />
-
             <span className="text-xs font-medium mt-1">message</span>
           </Link>
 
@@ -232,6 +231,7 @@ export function NavBar() {
           )}
         </div>
       </nav>
+
       {/* Menu Modal Mobile (profil utilisateur) */}
       {isMenuOpen && user && (
         <>
@@ -294,8 +294,8 @@ export function NavBar() {
         </>
       )}
 
-      {/* Spacer pour le contenu (évite que le bottom nav cache le contenu) */}
-      <div className="md:hidden h-16" />
+      {/* Spacer pour le contenu - AUGMENTÉ pour éviter que le bottom nav cache le contenu */}
+      <div className="md:hidden h-20" />
     </>
   );
 }
