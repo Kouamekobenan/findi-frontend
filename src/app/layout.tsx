@@ -16,16 +16,16 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Findi | chercher votre plat dans une ville donnée",
-    template: "%s | noBoutik", // Si une page s'appelle "iPhone 15", le titre sera "iPhone 15 | noBoutik"
+    default: "Findi | Cherchez votre plat dans une ville donnée",
+    template: "%s | Findi",
   },
   description:
-    "La plateforme de de recherche de plat mettant en relation entre client et restaurateur. Trouvez les meilleurs plats dans votre ville.",
-  keywords: ["marketplace", "recherche plat", "plat ", "ecommerce", "findi"],
-  metadataBase: new URL("https://votre-domaine.com"), // Remplace par ton vrai domaine plus tard
+    "La plateforme de recherche de plats mettant en relation clients et restaurateurs. Trouvez les meilleurs plats dans votre ville.",
+  keywords: ["marketplace", "recherche plat", "plat", "ecommerce", "findi"],
+  metadataBase: new URL("https://findi-frontend-production.up.railway.app"), // à remplacer plus tard
   openGraph: {
     title: "noBoutik",
-    description: "Connectez-vous avec pour des informations approfondir.",
+    description: "Connectez-vous pour découvrir des plats uniques.",
     type: "website",
     locale: "fr_FR",
     siteName: "Findi",
@@ -46,13 +46,13 @@ export const viewport: Viewport = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en">
-      
+    <html lang="fr">
       <head>
+        {/* ✅ Polices */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
@@ -63,11 +63,15 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Poppins:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap"
           rel="stylesheet"
         />
+
+        {/* ✅ Ajouts nécessaires pour PWA */}
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#000000" />
+        <link rel="apple-touch-icon" href="/logo.png" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {/* ✅ Ton provider global ici */}
         <AuthProvider>
           {children}
           <Toaster position="top-right" />

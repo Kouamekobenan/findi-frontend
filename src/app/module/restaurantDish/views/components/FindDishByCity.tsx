@@ -11,7 +11,6 @@ import {
   ChevronRight,
   Store,
   Utensils,
-  MessageCircle,
 } from "lucide-react";
 import { RestaurantDishRepository } from "../../infrastructure/restaurantDish-repository";
 import { FindDishByCityUsecase } from "../../application/usecases/find-dish-by-city.usecase";
@@ -41,7 +40,7 @@ export const DishExplorer = () => {
   const [dishQuery, setDishQuery] = useState("");
   const [page, setPage] = useState(1);
 
-  const limit = 12;
+  const limit = 10;
 
   // Filtrage LOCAL des plats
   const filteredDishes = useMemo(() => {
@@ -262,8 +261,8 @@ export const DishExplorer = () => {
                 </div>
               )}
               {/* PAGINATION */}
-              {!dishQuery && dishes.length > 0 && (
-                <div className="mt-12 sm:mt-16 flex justify-center items-center gap-2 sm:gap-3">
+              {!dishQuery && dishes.length > 10 && (
+                <div className="mt-4 sm:mt-4 mb-12 md:mb-3 flex justify-center items-center gap-2 sm:gap-3">
                   <button
                     disabled={page === 1}
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
