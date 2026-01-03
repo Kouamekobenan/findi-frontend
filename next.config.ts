@@ -4,6 +4,7 @@ const withPWA = require("next-pwa")({
   dest: "public", // les fichiers générés (service worker, cache)
   register: true, // auto-register le service worker
   skipWaiting: true, // mise à jour automatique du SW
+  disable: process.env.NODE_ENV === "development", // ✅ désactive PWA en dev
 });
 
 const nextConfig = {

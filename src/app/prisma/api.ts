@@ -1,6 +1,6 @@
 import axios from "axios";
 export const api = axios.create({
-  // baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1",
+  // baseURL: "http://localhost:3001/api/v1",
   baseURL:
     process.env.NEXT_PUBLIC_API_URL ||
     "https://restaurant-searchdish-production-fa05.up.railway.app/api/v1",

@@ -62,4 +62,23 @@ export class RestaurantDishRepository implements IRestaurantDishRepository {
     const response = await api.patch(url, dto);
     return response.data;
   }
+  async findName(page: number, limit: number, dishName: string): Promise<PaginatedResult<RestaurantDish>> {
+     const url = `restaurantDish/dish?page=${page}&limit=${limit}&dishName=${dishName}`;
+     try {
+       const response = await api.get(url);
+       return {
+         data: response.data.data,
+         total: response.data.total,
+         totalPage: response.data.totalPage,
+         limit: response.data.limit,
+         page: response.data.page,
+       };
+     } catch (error) {
+       console.error(
+         `[RestaurantDishRepository] Error paginating dishes:`,
+         error
+       );
+       throw error;
+     }
+  }
 }

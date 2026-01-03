@@ -11,5 +11,14 @@ export interface IRestaurantDishRepository {
     cityName: string
   ): Promise<PaginatedResult<RestaurantDish>>;
   delete(id: string): Promise<void>;
-  update(id: string, dto: UpdateRestaurantDishDto, file?: File | null): Promise<RestaurantDish>;
+  update(
+    id: string,
+    dto: UpdateRestaurantDishDto,
+    file?: File | null
+  ): Promise<RestaurantDish>;
+  findName(
+    page: number,
+    limit: number,
+    dishName: string
+  ): Promise<PaginatedResult<RestaurantDish>>;
 }

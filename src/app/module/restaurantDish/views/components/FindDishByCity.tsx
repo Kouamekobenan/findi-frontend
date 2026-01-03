@@ -16,10 +16,11 @@ import { RestaurantDishRepository } from "../../infrastructure/restaurantDish-re
 import { FindDishByCityUsecase } from "../../application/usecases/find-dish-by-city.usecase";
 import { RestaurantDish } from "../../domain/entities/restauDish.entity";
 import DishBanners from "@/app/composant/banniere/BanniereDish";
+import { FindDishByDishNameUsecase } from "../../application/usecases/find-restaurant-by-dish.usecase";
 
 // Initialisation des UseCases
 const restauRepo = new RestaurantDishRepository();
-const findDishByUseCase = new FindDishByCityUsecase(restauRepo);
+const findDishByUseCase = new FindDishByDishNameUsecase(restauRepo);
 
 export const DishExplorer = () => {
   // États de données
@@ -34,32 +35,34 @@ export const DishExplorer = () => {
     }));
   }, [dishes]);
 
-  // États de recherche
-  const [cityInput, setCityInput] = useState("");
-  const [activeCity, setActiveCity] = useState("");
-  const [dishQuery, setDishQuery] = useState("");
+  // États de recherche - INVERSÉS
+  const [dishInput, setDishInput] = useState(""); // Plat principal
+  const [activeDish, setActiveDish] = useState(""); // Plat actif pour la recherche
+  const [cityQuery, setCityQuery] = useState(""); // Filtre ville (secondaire)
   const [page, setPage] = useState(1);
 
   const limit = 10;
 
-  // Filtrage LOCAL des plats
+  // Filtrage LOCAL par ville
   const filteredDishes = useMemo(() => {
-    if (!dishQuery.trim()) return dishes;
+    if (!cityQuery.trim()) return dishes;
     return dishes.filter((item) =>
-      item.dish?.name?.toLowerCase().includes(dishQuery.toLowerCase())
+      item.restaurant?.country?.toLowerCase().includes(cityQuery.toLowerCase())
     );
-  }, [dishes, dishQuery]);
+  }, [dishes, cityQuery]);
 
-  // Appel API
+  // Appel API basé sur le plat
   useEffect(() => {
     const fetchResults = async () => {
-      if (!activeCity) return;
+      if (!activeDish) return;
       setLoading(true);
       try {
+        // Vous devrez peut-être créer un nouveau usecase pour rechercher par plat
+        // Pour l'instant, j'utilise l'ancien mais vous devrez l'adapter
         const response = await findDishByUseCase.execute(
           page,
           limit,
-          activeCity
+          activeDish // Passer le plat au lieu de la ville
         );
         setDishes(response.data || []);
       } catch (err) {
@@ -69,21 +72,21 @@ export const DishExplorer = () => {
       }
     };
     fetchResults();
-  }, [page, activeCity]);
+  }, [page, activeDish]);
 
   // Handlers
-  const handleCitySearch = (e: React.FormEvent) => {
+  const handleDishSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (cityInput.trim()) {
-      setActiveCity(cityInput);
+    if (dishInput.trim()) {
+      setActiveDish(dishInput);
       setPage(1);
-      setDishQuery("");
+      setCityQuery("");
       setHasSearched(true);
     }
   };
 
   const clearFilters = () => {
-    setDishQuery("");
+    setCityQuery("");
   };
 
   return (
@@ -116,20 +119,19 @@ export const DishExplorer = () => {
               </div>
             )}
 
-            {/* Formulaire Ville */}
-
-            <form onSubmit={handleCitySearch} className="w-full group">
+            {/* Formulaire Plat - PRINCIPAL */}
+            <form onSubmit={handleDishSearch} className="w-full group">
               <label className="block text-xs font-bold uppercase text-gray-400 mb-2 ml-1 transition-colors group-focus-within:text-orange-500">
-                Où souhaitez-vous manger ?
+                Quel plat souhaitez-vous manger ?
               </label>
               <div className="relative">
-                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Utensils className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
                   type="text"
                   className="w-full pl-12 pr-24 sm:pr-32 py-3 sm:py-4 rounded-2xl border-2 border-gray-100 focus:border-orange-500 outline-none transition-all shadow-sm text-base sm:text-lg"
-                  placeholder="Entrez votre ville..."
-                  value={cityInput}
-                  onChange={(e) => setCityInput(e.target.value)}
+                  placeholder="Pizza, Burger, Sushi..."
+                  value={dishInput}
+                  onChange={(e) => setDishInput(e.target.value)}
                 />
                 <button
                   type="submit"
@@ -141,22 +143,22 @@ export const DishExplorer = () => {
               </div>
             </form>
 
-            {/* Filtre Plat Préféré */}
+            {/* Filtre Ville - SECONDAIRE */}
             {hasSearched && (
               <div className="w-full animate-in slide-in-from-right duration-500">
                 <label className="block text-xs font-bold uppercase text-orange-500 mb-2 ml-1">
-                  Une envie précise ?
+                  Dans quelle ville ?
                 </label>
                 <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-400 w-5 h-5" />
+                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-400 w-5 h-5" />
                   <input
                     type="text"
                     className="w-full pl-12 pr-20 py-3 sm:py-4 rounded-2xl border-2 border-orange-100 focus:border-orange-500 outline-none transition-all shadow-sm bg-orange-50/30 text-base sm:text-lg"
-                    placeholder="Pizza, Burger, Sushi..."
-                    value={dishQuery}
-                    onChange={(e) => setDishQuery(e.target.value)}
+                    placeholder="Abidjan, Yamoussoukro, Bouaké..."
+                    value={cityQuery}
+                    onChange={(e) => setCityQuery(e.target.value)}
                   />
-                  {dishQuery && (
+                  {cityQuery && (
                     <button
                       onClick={clearFilters}
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-500 transition-colors"
@@ -175,13 +177,21 @@ export const DishExplorer = () => {
       {hasSearched && (
         <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
           {!loading && bannerItems.length > 0 && (
-            <DishBanners dishes={bannerItems} locationName={activeCity} />
+            <DishBanners dishes={bannerItems} locationName={activeDish} />
           )}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-10 gap-2">
             <div>
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                Plats à{" "}
-                <span className="text-orange-500 capitalize">{activeCity}</span>
+                <span className="text-orange-500 capitalize">{activeDish}</span>
+                {cityQuery && (
+                  <span className="text-gray-600">
+                    {" "}
+                    à{" "}
+                    <span className="text-orange-500 capitalize">
+                      {cityQuery}
+                    </span>
+                  </span>
+                )}
               </h2>
             </div>
           </div>
@@ -231,7 +241,7 @@ export const DishExplorer = () => {
                           className="mt-auto w-full text-center bg-gray-900 text-white py-2 sm:py-4 rounded-lg sm:rounded-2xl hover:bg-orange-500 transition-all font-bold shadow-md hover:shadow-orange-200 active:scale-95 text-[10px] sm:text-base"
                         >
                           <span className="hidden sm:inline">
-                            Ou trouvé ce plat ?
+                            Où trouver ce plat ?
                           </span>
                           <span className="sm:hidden">Voir</span>
                         </Link>
@@ -246,19 +256,19 @@ export const DishExplorer = () => {
                     Oups ! Rien ici.
                   </h3>
                   <p className="text-sm sm:text-base text-gray-500 mt-2 max-w-xs mx-auto px-4">
-                    Nous n'avons trouvé aucun plat correspondant à "{dishQuery}"
-                    à {activeCity}.
+                    Nous n'avons trouvé aucun "{activeDish}"
+                    {cityQuery && ` à ${cityQuery}`}.
                   </p>
                   <button
                     onClick={clearFilters}
                     className="mt-6 text-orange-500 font-bold hover:underline text-sm sm:text-base"
                   >
-                    Voir tous les plats de la ville
+                    Voir tous les résultats
                   </button>
                 </div>
               )}
               {/* PAGINATION */}
-              {!dishQuery && dishes.length > 10 && (
+              {!cityQuery && dishes.length > 10 && (
                 <div className="mt-4 sm:mt-4 mb-12 md:mb-3 flex justify-center items-center gap-2 sm:gap-3">
                   <button
                     disabled={page === 1}
