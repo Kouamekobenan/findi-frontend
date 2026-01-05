@@ -45,9 +45,11 @@ export const DishExplorer = () => {
 
   // Filtrage LOCAL par ville
   const filteredDishes = useMemo(() => {
-    if (!cityQuery.trim()) return dishes;
+    const trimmedQuery = cityQuery.trim().toLowerCase();
+    if (!trimmedQuery) return dishes;
+
     return dishes.filter((item) =>
-      item.restaurant?.country?.toLowerCase().includes(cityQuery.toLowerCase())
+      item.restaurant?.country.toLowerCase().includes(trimmedQuery)
     );
   }, [dishes, cityQuery]);
 
@@ -57,8 +59,6 @@ export const DishExplorer = () => {
       if (!activeDish) return;
       setLoading(true);
       try {
-        // Vous devrez peut-être créer un nouveau usecase pour rechercher par plat
-        // Pour l'instant, j'utilise l'ancien mais vous devrez l'adapter
         const response = await findDishByUseCase.execute(
           page,
           limit,
