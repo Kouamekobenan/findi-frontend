@@ -2,28 +2,33 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 import {
-  Menu,
   X,
   User,
   LogOut,
   ChevronDown,
   UtensilsCrossed,
   Home,
-  Search,
-  Heart,
   UserCircle,
   MessageCircle,
 } from "lucide-react";
 import Image from "next/image";
 import { LogoFindi, NameApp } from "@/app/lib/constant/constant";
 
+const MOBILE_NAV_ITEMS = [
+  { href: "/", label: "Accueil", icon: Home },
+  { href: "/module/restaurants/views", label: "Restaurant", icon: UtensilsCrossed },
+  { href: "/module/contact", label: "Message", icon: MessageCircle },
+] as const;
+
 export function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { user, logout } = useAuth();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -38,56 +43,66 @@ export function NavBar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const isActive = (href: string) =>
+    href === "/" ? pathname === "/" : pathname?.startsWith(href);
+
   return (
     <>
-      {/* NavBar Desktop - reste en haut */}
-      <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100 hidden md:block">
+      {/* NavBar Desktop */}
+      <nav className="bg-white/90 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100 hidden md:block">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <div className="flex-shrink-0">
-              <Link
-                href="/"
-                className="text-2xl font-black tracking-tighter text-orange-600"
-              >
-                <div className="mb-8 mt-14 animate-fade-in-up">
-                  <div className="inline-block relative">
-                    <div className="absolute inset-0 bg-orange-400 rounded-full filter blur-2xl opacity-30 animate-pulse"></div>
-                    <Image
-                      src={LogoFindi}
-                      width={50}
-                      height={50}
-                      alt={NameApp}
-                      className="relative z-10 drop-shadow-lg"
-                      priority
-                    />
-                  </div>
-                </div>
-              </Link>
-            </div>
+            <Link href="/" className="flex-shrink-0 flex items-center gap-2">
+              <Image
+                src={LogoFindi}
+                width={40}
+                height={40}
+                alt={NameApp}
+                className="drop-shadow-sm"
+                priority
+              />
+              <span className="text-xl font-black tracking-tight text-gray-900">
+                {NameApp}
+              </span>
+            </Link>
 
             {/* Menu Desktop */}
-            <div className="flex items-center space-x-8">
+            <div className="flex items-center gap-8">
               <Link
                 href="/"
-                className="text-sm font-semibold text-gray-600 hover:text-orange-600 transition-colors"
+                className={`relative text-sm font-semibold transition-colors py-2 ${
+                  isActive("/")
+                    ? "text-orange-600"
+                    : "text-gray-600 hover:text-orange-600"
+                }`}
               >
                 Accueil
+                {isActive("/") && (
+                  <span className="absolute -bottom-[1px] left-0 right-0 h-0.5 rounded-full bg-orange-600" />
+                )}
               </Link>
 
               <Link
                 href="/module/restaurants/views"
-                className="flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-orange-600 transition-colors"
+                className={`relative flex items-center gap-2 text-sm font-semibold transition-colors py-2 ${
+                  isActive("/module/restaurants/views")
+                    ? "text-orange-600"
+                    : "text-gray-600 hover:text-orange-600"
+                }`}
               >
                 <UtensilsCrossed size={16} />
                 Devenir restaurateur
+                {isActive("/module/restaurants/views") && (
+                  <span className="absolute -bottom-[1px] left-0 right-0 h-0.5 rounded-full bg-orange-600" />
+                )}
               </Link>
 
               {user ? (
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setIsProfileOpen(!isProfileOpen)}
-                    className="flex items-center gap-2 pl-4 border-l border-gray-200 group"
+                    className="flex items-center gap-2 pl-4 border-l border-gray-200 group cursor-pointer"
                   >
                     <div className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center text-orange-700 font-bold border border-orange-200 group-hover:bg-orange-600 group-hover:text-white transition-all">
                       {user.name?.charAt(0).toUpperCase()}
@@ -126,7 +141,7 @@ export function NavBar() {
 
                       <button
                         onClick={() => logout?.()}
-                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors mt-1 border-t border-gray-50"
+                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors mt-1 border-t border-gray-50 cursor-pointer"
                       >
                         <LogOut size={16} /> Déconnexion
                       </button>
@@ -147,86 +162,112 @@ export function NavBar() {
       </nav>
 
       {/* Top Bar Mobile - simple logo */}
-      <div className="md:hidden bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100">
+      <div className="md:hidden bg-white/90 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100">
         <div className="flex justify-center items-center h-14">
-          <Link
-            href="/"
-            className="text-2xl font-black tracking-tighter text-orange-600"
-          >
-            <div className="mb-8 mt-14 animate-fade-in-up">
-              <div className="inline-block relative">
-                <div className="absolute inset-0 bg-orange-400 rounded-full filter blur-2xl opacity-30 animate-pulse"></div>
-                <Image
-                  src={LogoFindi}
-                  width={50}
-                  height={50}
-                  alt={NameApp}
-                  className="relative z-10 drop-shadow-lg"
-                  priority
-                />
-              </div>
-            </div>
+          <Link href="/" className="flex items-center gap-2">
+            <Image
+              src={LogoFindi}
+              width={34}
+              height={34}
+              alt={NameApp}
+              priority
+            />
+            <span className="text-lg font-black tracking-tight text-gray-900">
+              {NameApp}
+            </span>
           </Link>
         </div>
       </div>
 
       {/* Bottom Navigation Mobile */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 shadow-2xl">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 z-50 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] rounded-t-2xl pb-[env(safe-area-inset-bottom)]">
         <div className="flex justify-around items-center h-16 px-2">
-          {/* Accueil */}
-          <Link
-            href="/"
-            className="flex flex-col items-center justify-center flex-1 py-2 text-gray-600 hover:text-orange-600 active:scale-95 transition-all"
-          >
-            <Home size={24} strokeWidth={2} />
-            <span className="text-xs font-medium mt-1">Accueil</span>
-          </Link>
-
-          {/* Recherche */}
-          <Link
-            href="/page"
-            className="flex flex-col items-center justify-center flex-1 py-2 text-gray-600 hover:text-orange-600 active:scale-95 transition-all"
-          >
-            <Search size={24} strokeWidth={2} />
-            <span className="text-xs font-medium mt-1">search</span>
-          </Link>
-
-          {/* Devenir Restaurateur */}
-          <Link
-            href="/module/restaurants/views"
-            className="flex flex-col items-center justify-center flex-1 py-2 text-gray-600 hover:text-orange-600 active:scale-95 transition-all"
-          >
-            <UtensilsCrossed size={24} strokeWidth={2} />
-            <span className="text-xs font-medium mt-1">Restaurant</span>
-          </Link>
-
-          {/* Favoris */}
-          <Link
-            href="/module/contact"
-            className="flex flex-col items-center justify-center flex-1 py-2 text-gray-600 hover:text-orange-600 active:scale-95 transition-all"
-          >
-            <MessageCircle size={24} strokeWidth={2} />
-            <span className="text-xs font-medium mt-1">message</span>
-          </Link>
+          {MOBILE_NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+            const active = isActive(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                className="flex flex-col items-center justify-center flex-1 py-2 active:scale-95 transition-transform"
+              >
+                <span
+                  className={`flex items-center justify-center w-11 h-8 rounded-full transition-colors ${
+                    active ? "bg-orange-100" : ""
+                  }`}
+                >
+                  <Icon
+                    size={24}
+                    strokeWidth={active ? 2.75 : 2}
+                    className={active ? "text-orange-600" : "text-gray-500"}
+                  />
+                </span>
+                <span
+                  className={`text-[11px] mt-0.5 ${
+                    active ? "font-bold text-orange-600" : "font-medium text-gray-500"
+                  }`}
+                >
+                  {label}
+                </span>
+              </Link>
+            );
+          })}
 
           {/* Profil / Menu */}
           {user ? (
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="flex flex-col items-center justify-center flex-1 py-2 text-gray-600 hover:text-orange-600 active:scale-95 transition-all"
+              className="flex flex-col items-center justify-center flex-1 py-2 active:scale-95 transition-transform cursor-pointer"
             >
-              <div className="w-6 h-6 rounded-full bg-orange-600 flex items-center justify-center text-white text-xs font-bold">
-                {user.name?.charAt(0).toUpperCase()}
-              </div>
-              <span className="text-xs font-medium mt-1">Profil</span>
+              <span
+                className={`flex items-center justify-center w-11 h-8 rounded-full transition-colors ${
+                  isMenuOpen ? "bg-orange-100" : ""
+                }`}
+              >
+                <div
+                  className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold ${
+                    isMenuOpen ? "bg-orange-600" : "bg-gray-400"
+                  }`}
+                >
+                  {user.name?.charAt(0).toUpperCase()}
+                </div>
+              </span>
+              <span
+                className={`text-[11px] mt-0.5 ${
+                  isMenuOpen ? "font-bold text-orange-600" : "font-medium text-gray-500"
+                }`}
+              >
+                Profil
+              </span>
             </button>
           ) : (
             <Link
               href="/module/auth/views/login"
-              className="flex flex-col items-center justify-center flex-1 py-2 text-gray-600 hover:text-orange-600 active:scale-95 transition-all"
+              className="flex flex-col items-center justify-center flex-1 py-2 active:scale-95 transition-transform"
             >
-              <UserCircle size={24} strokeWidth={2} />
-              <span className="text-xs font-medium mt-1">Connexion</span>
+              <span
+                className={`flex items-center justify-center w-11 h-8 rounded-full transition-colors ${
+                  isActive("/module/auth/views/login") ? "bg-orange-100" : ""
+                }`}
+              >
+                <UserCircle
+                  size={24}
+                  strokeWidth={isActive("/module/auth/views/login") ? 2.75 : 2}
+                  className={
+                    isActive("/module/auth/views/login")
+                      ? "text-orange-600"
+                      : "text-gray-500"
+                  }
+                />
+              </span>
+              <span
+                className={`text-[11px] mt-0.5 ${
+                  isActive("/module/auth/views/login")
+                    ? "font-bold text-orange-600"
+                    : "font-medium text-gray-500"
+                }`}
+              >
+                Connexion
+              </span>
             </Link>
           )}
         </div>
@@ -248,7 +289,7 @@ export function NavBar() {
                 <h3 className="text-lg font-bold text-gray-800">Mon Compte</h3>
                 <button
                   onClick={() => setIsMenuOpen(false)}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
                 >
                   <X size={20} />
                 </button>
@@ -283,7 +324,7 @@ export function NavBar() {
                     logout?.();
                     setIsMenuOpen(false);
                   }}
-                  className="w-full flex items-center gap-3 p-4 text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                  className="w-full flex items-center gap-3 p-4 text-red-600 hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
                 >
                   <LogOut size={20} />
                   <span className="font-semibold">Déconnexion</span>
@@ -294,7 +335,7 @@ export function NavBar() {
         </>
       )}
 
-      {/* Spacer pour le contenu - AUGMENTÉ pour éviter que le bottom nav cache le contenu */}
+      {/* Spacer pour le contenu - évite que le bottom nav cache le contenu */}
       <div className="md:hidden h-20" />
     </>
   );
