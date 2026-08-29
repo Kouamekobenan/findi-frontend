@@ -2,13 +2,14 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   CheckCircle2,
   XCircle,
   Loader2,
   AlertCircle,
 } from "lucide-react";
-import { Order, OrderStatus } from "@/app/module/order/domain/entities/order.entity";
+import { Order } from "@/app/module/order/domain/entities/order.entity";
 import { PaymentRepository } from "@/app/module/payment/infrastructure/payment-repository";
 import { GetPaymentStatusUseCase } from "@/app/module/payment/application/usecases/get-payment-status.usecase";
 import { PENDING_ORDER_STORAGE_KEY } from "@/app/module/order/views/constants";
@@ -21,6 +22,35 @@ const POLL_INTERVAL_MS = 2000;
 
 type ViewState = "checking" | "paid" | "failed" | "pending" | "not-found";
 
+function OrderSummary({ order }: { order: Order }) {
+  return (
+    <div className="text-left bg-gray-50 rounded-xl p-4 space-y-3">
+      <div className="flex justify-between text-sm">
+        <span className="text-gray-500">Référence</span>
+        <span className="font-semibold text-gray-900">{order.reference}</span>
+      </div>
+      <div className="space-y-1.5 border-t border-gray-200 pt-3">
+        {order.items.map((item) => (
+          <div key={item.id} className="flex justify-between text-sm">
+            <span className="text-gray-700">
+              {item.quantity} × plat ({item.unitPriceCents / 100} {item.currency})
+            </span>
+            <span className="text-gray-900 font-medium">
+              {(item.quantity * item.unitPriceCents) / 100} {item.currency}
+            </span>
+          </div>
+        ))}
+      </div>
+      <div className="flex justify-between border-t border-gray-200 pt-3">
+        <span className="font-bold text-gray-900">Total</span>
+        <span className="font-bold text-green-600 text-lg">
+          {order.totalAmountCents / 100} {order.currency}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function PaymentResultView({
   redirectStatus,
 }: {
@@ -28,9 +58,12 @@ export default function PaymentResultView({
 }) {
   const [state, setState] = useState<ViewState>("checking");
   const [order, setOrder] = useState<Order | null>(null);
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    const orderId = localStorage.getItem(PENDING_ORDER_STORAGE_KEY);
+    const orderId =
+      searchParams.get("orderId") ||
+      localStorage.getItem(PENDING_ORDER_STORAGE_KEY);
     if (!orderId) {
       setState("not-found");
       return;
@@ -71,7 +104,7 @@ export default function PaymentResultView({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [searchParams]);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50">
@@ -88,13 +121,14 @@ export default function PaymentResultView({
           </>
         )}
 
-        {state === "paid" && (
+        {state === "paid" && order && (
           <>
             <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto" />
             <h2 className="text-2xl font-bold text-gray-900">Paiement réussi</h2>
             <p className="text-gray-600 text-sm">
-              Votre commande {order?.reference} a bien été payée.
+              Votre commande a bien été payée.
             </p>
+            <OrderSummary order={order} />
             <Link
               href="/"
               className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-full transition-all"

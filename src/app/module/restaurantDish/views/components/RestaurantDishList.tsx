@@ -22,6 +22,8 @@ import { RestaurantDish } from "../../domain/entities/restauDish.entity";
 import DishBanner from "@/app/composant/banniere/Banniere";
 import { useAuth } from "@/app/context/AuthContext";
 import OrderPaymentModal from "@/app/module/order/views/components/OrderPaymentModal";
+import { safeImageUrl } from "@/app/module/common/safe-image-url";
+import { formatDayHours } from "@/app/module/common/format-day-hours";
 
 const restauDishRepo = new RestaurantDishRepository();
 const findRestauDishUseCase = new FindRestauDishUseCase(restauDishRepo);
@@ -89,7 +91,7 @@ export default function RestaurantDishList() {
     try {
       const hours =
         typeof hoursJson === "string" ? JSON.parse(hoursJson) : hoursJson;
-      return Object.entries(hours).map(([day, time]: [string, any]) => (
+      return Object.entries(hours).map(([day, time]) => (
         <div
           key={day}
           className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0"
@@ -97,7 +99,9 @@ export default function RestaurantDishList() {
           <span className="capitalize font-medium text-gray-700 text-sm">
             {day}
           </span>
-          <span className="text-gray-900 text-sm font-semibold">{time}</span>
+          <span className="text-gray-900 text-sm font-semibold">
+            {formatDayHours(time)}
+          </span>
         </div>
       ));
     } catch (e) {
@@ -141,7 +145,7 @@ export default function RestaurantDishList() {
     .filter((item) => item.dish?.image)
     .map((item) => ({
       name: item.dish?.name || "Plat inconnu",
-      image: item.dish?.image || "/placeholder.jpg",
+      image: safeImageUrl(item.dish?.image, "/placeholder.jpg"),
     }));
 
   return (
@@ -159,7 +163,7 @@ export default function RestaurantDishList() {
             {/* Image du restaurant */}
             <div className="hidden sm:block relative sm:h-80 lg:h-full min-h-[300px]">
               <Image
-                src={restaurant?.image || "/placeholder.jpg"}
+                src={safeImageUrl(restaurant?.image, "/placeholder.jpg")}
                 alt={restaurant?.name || "Restaurant"}
                 fill
                 className="object-cover"
@@ -304,7 +308,7 @@ export default function RestaurantDishList() {
                     {/* Image du plat */}
                     <div className="relative h-28 sm:h-52 w-full overflow-hidden bg-gray-100">
                       <Image
-                        src={item.dish?.image || "/placeholder.jpg"}
+                        src={safeImageUrl(item.dish?.image, "/placeholder.jpg")}
                         alt={item.dish?.name || "Plat"}
                         fill
                         className="object-cover group-hover:scale-110 transition-transform duration-500"

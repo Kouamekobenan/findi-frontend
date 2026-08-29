@@ -18,6 +18,8 @@ import Link from "next/link";
 import { RestaurantRepository } from "../../restaurants/infrastructure/restaurant-repository";
 import { FindRestaurantUsecase } from "../../restaurants/application/usecases/find-restaurant.usecase";
 import { Restaurant } from "../../restaurants/domain/entities/restaurant.entity";
+import { safeImageUrl } from "@/app/module/common/safe-image-url";
+import { formatDayHours } from "@/app/module/common/format-day-hours";
 
 import { api } from "@/app/prisma/api";
 import toast from "react-hot-toast";
@@ -148,7 +150,7 @@ function RestaurantCard({
       {" "}
       <div className="relative h-40 w-full group overflow-hidden bg-slate-100">
         <Image
-          src={restaurant.image || "/placeholder-restaurant.jpg"}
+          src={safeImageUrl(restaurant.image, "/placeholder-restaurant.jpg")}
           alt={restaurant.name}
           fill
           className="object-cover transition-transform duration-700 group-hover:scale-105"
@@ -261,7 +263,7 @@ function renderHours(hours: any) {
           className="flex justify-between text-[11px] text-slate-500 border-b border-slate-50 pb-1"
         >
           <span className="capitalize font-semibold">{day}</span>
-          <span>{time as string}</span>
+          <span>{formatDayHours(time)}</span>
         </div>
       ))}
     </div>

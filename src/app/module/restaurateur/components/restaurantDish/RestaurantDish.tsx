@@ -18,6 +18,7 @@ import { FindRestauDishUseCase } from "@/app/module/restaurantDish/application/u
 import { RestaurantDish } from "@/app/module/restaurantDish/domain/entities/restauDish.entity";
 import { useAuth } from "@/app/context/AuthContext";
 import Link from "next/link";
+import { safeImageUrl } from "@/app/module/common/safe-image-url";
 import { DeleteRestaurantDishUsecase } from "@/app/module/restaurantDish/application/usecases/delete-restaurantDish.usecase";
 import { UpdateRestaurantDishUsecase } from "@/app/module/restaurantDish/application/usecases/update-restaurantDish.usecase";
 import { UpdateRestaurantDishDto } from "@/app/module/restaurantDish/application/dtos/update.dto";
@@ -180,7 +181,7 @@ export default function RestaurantDashboard() {
             >
               <div className="relative h-28">
                 <Image
-                  src={item.dish?.image || "/placeholder.jpg"}
+                  src={safeImageUrl(item.dish?.image, "/placeholder.jpg")}
                   alt="plat"
                   fill
                   className={`object-cover ${
@@ -255,7 +256,7 @@ export default function RestaurantDashboard() {
                   <td className="px-6 py-4">
                     <div className="relative h-16 w-16 rounded-lg overflow-hidden">
                       <Image
-                        src={item.dish?.image || "/placeholder.jpg"}
+                        src={safeImageUrl(item.dish?.image, "/placeholder.jpg")}
                         alt="plat"
                         fill
                         className={`object-cover ${

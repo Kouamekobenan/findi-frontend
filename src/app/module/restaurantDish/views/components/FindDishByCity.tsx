@@ -22,6 +22,7 @@ import { FindAllLinkedDishUsecase } from "@/app/module/dish/application/usecases
 import { Dish } from "@/app/module/dish/domain/entities/dish.entity";
 import { RestaurantRepository } from "@/app/module/restaurants/infrastructure/restaurant-repository";
 import { FindRestaurantUsecase } from "@/app/module/restaurants/application/usecases/find-restaurant.usecase";
+import { safeImageUrl } from "@/app/module/common/safe-image-url";
 
 // Initialisation des UseCases
 const restauRepo = new RestaurantDishRepository();
@@ -40,7 +41,7 @@ export const DishExplorer = () => {
   const bannerItems = useMemo(() => {
     return dishes.slice(0, 5).map((d) => ({
       name: d.dish?.name || "",
-      image: d.dish?.image || "/placeholder.png",
+      image: safeImageUrl(d.dish?.image, "/placeholder.png"),
     }));
   }, [dishes]);
 
@@ -281,7 +282,7 @@ export const DishExplorer = () => {
                       >
                         <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-gray-100 group-hover:border-orange-500 shadow-sm group-active:scale-95 transition-all">
                           <Image
-                            src={dish.image || "/placeholder.png"}
+                            src={safeImageUrl(dish.image, "/placeholder.png")}
                             alt={dish.name}
                             fill
                             className="object-cover group-hover:scale-105 transition-transform duration-500"

@@ -13,6 +13,7 @@ import {
   PaymentMethod,
 } from "@/app/module/payment/domain/entities/payment.entity";
 import { PENDING_ORDER_STORAGE_KEY } from "@/app/module/order/views/constants";
+import { safeImageUrl } from "@/app/module/common/safe-image-url";
 
 const orderRepository = new OrderRepository();
 const createOrderUseCase = new CreateOrderUseCase(orderRepository);
@@ -88,7 +89,7 @@ export default function OrderPaymentModal({
           <div className="flex items-center gap-4">
             <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
               <Image
-                src={item.dish?.image || "/placeholder.jpg"}
+                src={safeImageUrl(item.dish?.image, "/placeholder.jpg")}
                 alt={item.dish?.name || "Plat"}
                 fill
                 className="object-cover"

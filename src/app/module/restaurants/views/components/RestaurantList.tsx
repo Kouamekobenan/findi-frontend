@@ -13,6 +13,7 @@ import {
 import { Restaurant } from "../../domain/entities/restaurant.entity";
 import { RestaurantRepository } from "../../infrastructure/restaurant-repository";
 import { FindRestaurantUsecase } from "../../application/usecases/find-restaurant.usecase";
+import { formatDayHours } from "@/app/module/common/format-day-hours";
 import { descriptionApp, NameApp } from "@/app/lib/constant/constant";
 import Link from "next/link";
 
@@ -113,7 +114,7 @@ function RestaurantCard({ restaurant }: { restaurant: Restaurant }) {
               <span className="font-medium text-slate-700 capitalize">
                 {day}
               </span>
-              <span className="text-slate-500">{time as string}</span>
+              <span className="text-slate-500">{formatDayHours(time)}</span>
             </div>
           ))}
         </div>
