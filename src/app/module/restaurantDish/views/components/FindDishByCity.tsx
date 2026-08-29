@@ -103,7 +103,7 @@ export const DishExplorer = () => {
     if (!trimmedQuery) return dishes;
 
     return dishes.filter((item) =>
-      item.restaurant?.country.toLowerCase().includes(trimmedQuery)
+      item.restaurant?.country.toLowerCase().includes(trimmedQuery),
     );
   }, [dishes, cityQuery]);
 
@@ -112,7 +112,7 @@ export const DishExplorer = () => {
     const trimmedQuery = cityQuery.trim().toLowerCase();
     if (!trimmedQuery) return allCities;
     return allCities.filter((city) =>
-      city.toLowerCase().includes(trimmedQuery)
+      city.toLowerCase().includes(trimmedQuery),
     );
   }, [allCities, cityQuery]);
 
@@ -139,7 +139,7 @@ export const DishExplorer = () => {
         const response = await findDishByUseCase.execute(
           page,
           limit,
-          activeDish // Passer le plat au lieu de la ville
+          activeDish, // Passer le plat au lieu de la ville
         );
         setDishes(response.data || []);
       } catch (err) {
@@ -187,13 +187,16 @@ export const DishExplorer = () => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
       setHighlightedCityIndex((prev) =>
-        Math.min(prev + 1, filteredCityOptions.length - 1)
+        Math.min(prev + 1, filteredCityOptions.length - 1),
       );
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setHighlightedCityIndex((prev) => Math.max(prev - 1, 0));
     } else if (e.key === "Enter") {
-      if (highlightedCityIndex >= 0 && filteredCityOptions[highlightedCityIndex]) {
+      if (
+        highlightedCityIndex >= 0 &&
+        filteredCityOptions[highlightedCityIndex]
+      ) {
         e.preventDefault();
         selectCity(filteredCityOptions[highlightedCityIndex]);
       }
@@ -206,159 +209,209 @@ export const DishExplorer = () => {
     <div className="min-h-screen bg-gray-50 transition-colors duration-500">
       {/* SECTION HEADER / SEARCH */}
       <section
-        className={`bg-white border-b transition-all duration-700 ease-in-out ${
+        className={`relative overflow-hidden bg-white border-b transition-all duration-700 ease-in-out ${
           !hasSearched
-            ? "min-h-[60vh] sm:h-[70vh] flex items-center py-8"
-            : "py-4 sm:py-6 sticky top-0 z-30 shadow-sm"
+            ? "min-h-[52vh] sm:min-h-[60vh] lg:min-h-[65vh] flex items-center py-10 sm:py-14"
+            : "py-3 sm:py-5 sticky top-0 z-30 shadow-sm backdrop-blur-md bg-white/95"
         }`}
       >
-        <div className="container mx-auto px-4 sm:px-6 w-full">
+        {!hasSearched && (
+          <>
+            <div className="pointer-events-none absolute -top-24 -right-16 w-64 h-64 sm:w-96 sm:h-96 bg-orange-200/40 rounded-full blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-28 -left-16 w-64 h-64 sm:w-96 sm:h-96 bg-orange-100/60 rounded-full blur-3xl" />
+          </>
+        )}
+
+        <div className="relative container mx-auto px-4 sm:px-6 w-full">
           <div
             className={`${
               !hasSearched
-                ? "max-w-3xl mx-auto text-center"
-                : "flex flex-col gap-4 sm:gap-6"
+                ? "max-w-2xl mx-auto text-center"
+                : "max-w-5xl mx-auto flex flex-col gap-3"
             }`}
           >
             {!hasSearched && (
-              <div className="mb-8 sm:mb-10 animate-in fade-in zoom-in duration-700">
-                <h1 className="text-2xl sm:text-2xl lg:text-3xl font-extrabold text-gray-900 mb-3 sm:mb-4 px-4">
-                  Qu'est-ce qu'on <span className="text-orange-500">mange</span>{" "}
+              <div className="mb-6 sm:mb-8 animate-in fade-in zoom-in duration-700">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 mb-2 sm:mb-3 px-4 tracking-tight">
+                  Qu'est-ce qu'on{" "}
+                  <span className="bg-gradient-to-r from-orange-500 to-orange-400 bg-clip-text text-transparent">
+                    mange
+                  </span>{" "}
                   aujourd'hui ?
                 </h1>
-                <p className="text-base sm:text-xl text-gray-500 px-4">
-                  Trouvez les meilleurs plats autour de vous en un clic.
+                <p className="text-sm sm:text-base text-gray-500 px-4">
+                  Tapez le nom d'un plat ou choisissez une suggestion ci-dessous.
                 </p>
               </div>
             )}
 
-            {/* Formulaire Plat - PRINCIPAL */}
-            <form onSubmit={handleDishSearch} className="w-full group">
-              <label className="block text-xs font-bold uppercase text-gray-400 mb-2 ml-1 transition-colors group-focus-within:text-orange-500">
-                Quel plat souhaitez-vous manger ?
-              </label>
-              <div className="relative">
-                <Utensils className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  className="w-full pl-12 pr-24 sm:pr-32 py-3 sm:py-4 rounded-2xl border-2 border-gray-100 focus:border-orange-500 outline-none transition-all shadow-sm text-base sm:text-lg"
-                  placeholder="Pizza, Burger, Sushi..."
-                  value={dishInput}
-                  onChange={(e) => setDishInput(e.target.value)}
-                />
-                <button
-                  type="submit"
-                  className="absolute right-2 top-2 bottom-2 bg-gray-900 hover:bg-orange-600 text-white px-4 sm:px-6 rounded-xl font-bold transition-all active:scale-95 text-sm sm:text-base"
-                >
-                  <span className="hidden sm:inline">Chercher</span>
-                  <Search className="w-5 h-5 sm:hidden" />
-                </button>
-              </div>
-            </form>
-
-            {/* Suggestions de plats - choix par clic sur une image */}
-            {!hasSearched && (suggestionsLoading || suggestedDishes.length > 0) && (
-              <div className="mt-8 sm:mt-10 animate-in fade-in duration-700">
-                <p className="text-xs font-bold uppercase text-gray-400 mb-4 tracking-wide">
-                  Ou choisissez parmi nos suggestions
-                </p>
-                {suggestionsLoading ? (
-                  <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-2 px-1 justify-center">
-                    {[...Array(6)].map((_, i) => (
-                      <div key={i} className="flex flex-col items-center gap-2 shrink-0">
-                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gray-200 animate-pulse" />
-                        <div className="w-12 h-3 rounded bg-gray-200 animate-pulse" />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-2 px-1 justify-start sm:justify-center">
-                    {suggestedDishes.map((dish) => (
-                      <button
-                        key={dish.id}
-                        type="button"
-                        onClick={() => handleSuggestionClick(dish)}
-                        className="flex flex-col items-center gap-2 shrink-0 group"
-                      >
-                        <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-gray-100 group-hover:border-orange-500 shadow-sm group-active:scale-95 transition-all">
-                          <Image
-                            src={safeImageUrl(dish.image, "/placeholder.png")}
-                            alt={dish.name}
-                            fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          />
-                        </div>
-                        <span className="text-xs sm:text-sm font-semibold text-gray-700 group-hover:text-orange-500 capitalize max-w-20 truncate">
-                          {dish.name}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Filtre Ville - SECONDAIRE */}
-            {hasSearched && (
-              <div
-                className="w-full animate-in slide-in-from-right duration-500"
-                ref={cityFieldRef}
+            {/* Barre de recherche */}
+            <div
+              className={
+                hasSearched
+                  ? "flex flex-col sm:flex-row gap-2.5 sm:gap-3"
+                  : "w-full"
+              }
+            >
+              {/* Formulaire Plat - PRINCIPAL */}
+              <form
+                onSubmit={handleDishSearch}
+                className={hasSearched ? "sm:flex-[1.2] min-w-0" : "w-full"}
               >
-                <label className="block text-xs font-bold uppercase text-orange-500 mb-2 ml-1">
-                  Dans quelle ville ?
-                </label>
-                <div className="relative">
-                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-400 w-5 h-5" />
+                {!hasSearched && (
+                  <label className="block text-xs font-bold uppercase text-gray-400 mb-2 ml-1">
+                    Quel plat souhaitez-vous manger ?
+                  </label>
+                )}
+                <div
+                  className={`group relative flex items-center bg-white border-2 border-gray-100 focus-within:border-orange-500 transition-all ${
+                    hasSearched
+                      ? "rounded-2xl"
+                      : "rounded-full shadow-lg shadow-orange-100/60"
+                  }`}
+                >
+                  <Utensils
+                    className={`absolute text-gray-400 group-focus-within:text-orange-500 transition-colors pointer-events-none ${
+                      hasSearched ? "left-4 w-4 h-4 sm:w-5 sm:h-5" : "left-5 w-5 h-5"
+                    }`}
+                  />
                   <input
                     type="text"
-                    role="combobox"
-                    aria-expanded={isCityDropdownOpen}
-                    aria-autocomplete="list"
-                    autoComplete="off"
-                    className="w-full pl-12 pr-20 py-3 sm:py-4 rounded-2xl border-2 border-orange-100 focus:border-orange-500 outline-none transition-all shadow-sm bg-orange-50/30 text-base sm:text-lg"
-                    placeholder="Abidjan, Yamoussoukro, Bouaké..."
-                    value={cityQuery}
-                    onChange={(e) => {
-                      setCityQuery(e.target.value);
-                      setIsCityDropdownOpen(true);
-                      setHighlightedCityIndex(-1);
-                    }}
-                    onFocus={() => setIsCityDropdownOpen(true)}
-                    onKeyDown={handleCityKeyDown}
+                    className={`w-full bg-transparent outline-none text-gray-900 placeholder:text-gray-400 ${
+                      hasSearched
+                        ? "pl-11 sm:pl-12 pr-12 py-3 sm:py-3.5 rounded-2xl text-sm sm:text-base"
+                        : "pl-14 pr-28 sm:pr-36 py-4 sm:py-5 rounded-full text-base sm:text-lg"
+                    }`}
+                    placeholder="Pizza, Burger, Sushi..."
+                    value={dishInput}
+                    onChange={(e) => setDishInput(e.target.value)}
                   />
-                  {cityQuery && (
-                    <button
-                      type="button"
-                      onClick={clearFilters}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-500 transition-colors"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  )}
+                  <button
+                    type="submit"
+                    aria-label="Rechercher"
+                    className={`absolute cursor-pointer flex items-center justify-center bg-gray-900 hover:bg-orange-600 text-white font-bold transition-all active:scale-95 ${
+                      hasSearched
+                        ? "right-1.5 w-8 h-8 sm:w-9 sm:h-9 rounded-xl"
+                        : "right-2 gap-2 px-5 sm:px-7 py-2.5 sm:py-3.5 rounded-full text-sm sm:text-base"
+                    }`}
+                  >
+                    {hasSearched ? (
+                      <Search className="w-4 h-4" />
+                    ) : (
+                      <>
+                        <span className="hidden sm:inline">Chercher</span>
+                        <Search className="w-5 h-5 sm:hidden" />
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
 
-                  {isCityDropdownOpen && filteredCityOptions.length > 0 && (
-                    <ul className="absolute left-0 right-0 z-40 mt-2 max-h-60 overflow-y-auto rounded-2xl border-2 border-orange-100 bg-white shadow-lg py-2">
-                      {filteredCityOptions.map((city, index) => (
-                        <li key={city}>
-                          <button
-                            type="button"
-                            onMouseDown={(e) => e.preventDefault()}
-                            onClick={() => selectCity(city)}
-                            className={`w-full text-left px-4 py-2 sm:py-2.5 text-sm sm:text-base capitalize transition-colors ${
-                              index === highlightedCityIndex
-                                ? "bg-orange-50 text-orange-600"
-                                : "text-gray-700 hover:bg-orange-50 hover:text-orange-600"
-                            }`}
-                          >
-                            {city}
-                          </button>
-                        </li>
+              {/* Filtre Ville - SECONDAIRE, cote à cote avec le plat */}
+              {hasSearched && (
+                <div
+                  className="sm:flex-1 min-w-0 animate-in fade-in slide-in-from-right-2 duration-500"
+                  ref={cityFieldRef}
+                >
+                  <div className="relative">
+                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-400 w-4 h-4 sm:w-5 sm:h-5 pointer-events-none" />
+                    <input
+                      type="text"
+                      role="combobox"
+                      aria-expanded={isCityDropdownOpen}
+                      aria-autocomplete="list"
+                      autoComplete="off"
+                      className="w-full pl-11 sm:pl-12 pr-10 py-3 sm:py-3.5 rounded-2xl border-2 border-orange-100 focus:border-orange-500 outline-none transition-all bg-orange-50/40 text-sm sm:text-base placeholder:text-gray-400"
+                      placeholder="Ville : Abidjan, Bouaké..."
+                      value={cityQuery}
+                      onChange={(e) => {
+                        setCityQuery(e.target.value);
+                        setIsCityDropdownOpen(true);
+                        setHighlightedCityIndex(-1);
+                      }}
+                      onFocus={() => setIsCityDropdownOpen(true)}
+                      onKeyDown={handleCityKeyDown}
+                    />
+                    {cityQuery && (
+                      <button
+                        type="button"
+                        onClick={clearFilters}
+                        className="absolute cursor-pointer right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-500 transition-colors"
+                      >
+                        <X className="w-4 h-4 sm:w-5 sm:h-5" />
+                      </button>
+                    )}
+
+                    {isCityDropdownOpen && filteredCityOptions.length > 0 && (
+                      <ul className="absolute left-0 right-0 z-40 mt-2 max-h-60 overflow-y-auto rounded-2xl border-2 border-orange-100 bg-white shadow-lg py-2">
+                        {filteredCityOptions.map((city, index) => (
+                          <li key={city}>
+                            <button
+                              type="button"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => selectCity(city)}
+                              className={`w-full cursor-pointer text-left px-4 py-2 sm:py-2.5 text-sm sm:text-base capitalize transition-colors ${
+                                index === highlightedCityIndex
+                                  ? "bg-orange-50 text-orange-600"
+                                  : "text-gray-700 hover:bg-orange-50 hover:text-orange-600"
+                              }`}
+                            >
+                              {city}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Suggestions de plats - choix par clic sur une image */}
+            {!hasSearched &&
+              (suggestionsLoading || suggestedDishes.length > 0) && (
+                <div className="mt-8 sm:mt-10 animate-in fade-in duration-700">
+                  <p className="text-xs font-bold uppercase text-gray-400 mb-4 tracking-wide">
+                    Ou choisissez parmi nos suggestions
+                  </p>
+                  {suggestionsLoading ? (
+                    <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-2 px-1 justify-center">
+                      {[...Array(6)].map((_, i) => (
+                        <div
+                          key={i}
+                          className="flex flex-col items-center gap-2 shrink-0"
+                        >
+                          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gray-200 animate-pulse" />
+                          <div className="w-12 h-3 rounded bg-gray-200 animate-pulse" />
+                        </div>
                       ))}
-                    </ul>
+                    </div>
+                  ) : (
+                    <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-2 px-1 justify-start sm:justify-center">
+                      {suggestedDishes.map((dish) => (
+                        <button
+                          key={dish.id}
+                          type="button"
+                          onClick={() => handleSuggestionClick(dish)}
+                          className="flex flex-col items-center gap-2 shrink-0 group cursor-pointer"
+                        >
+                          <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-gray-100 group-hover:border-orange-500 shadow-sm group-hover:shadow-md group-hover:-translate-y-0.5 group-active:scale-95 transition-all">
+                            <Image
+                              src={safeImageUrl(dish.image, "/placeholder.png")}
+                              alt={dish.name}
+                              fill
+                              className="object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                          </div>
+                          <span className="text-xs sm:text-sm font-semibold text-gray-700 group-hover:text-orange-500 capitalize max-w-20 truncate">
+                            {dish.name}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
                   )}
                 </div>
-              </div>
-            )}
+              )}
           </div>
         </div>
       </section>
@@ -370,7 +423,7 @@ export const DishExplorer = () => {
           )}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-10 gap-2">
             <div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900">
                 <span className="text-orange-500 capitalize">{activeDish}</span>
                 {cityQuery && (
                   <span className="text-gray-600">
@@ -400,9 +453,9 @@ export const DishExplorer = () => {
                   {filteredDishes.map((dish) => (
                     <article
                       key={dish.id}
-                      className="bg-white rounded-2xl sm:rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden border border-gray-50 group flex flex-col h-full"
+                      className="bg-white rounded-2xl sm:rounded-[2.5rem] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500 overflow-hidden border border-gray-50 group flex flex-col h-full"
                     >
-                      <div className="relative h-28 sm:h-56 lg:h-64 w-full overflow-hidden">
+                      <div className="relative h-28 sm:h-56 lg:h-64 xl:h-72 w-full overflow-hidden">
                         <Image
                           src={dish.dish?.image ?? "/placeholder.png"}
                           alt={dish.dish?.name ?? "Plat"}
@@ -450,7 +503,7 @@ export const DishExplorer = () => {
                   </p>
                   <button
                     onClick={clearFilters}
-                    className="mt-6 text-orange-500 font-bold hover:underline text-sm sm:text-base"
+                    className="mt-6 cursor-pointer text-orange-500 font-bold hover:underline text-sm sm:text-base"
                   >
                     Voir tous les résultats
                   </button>
@@ -462,7 +515,7 @@ export const DishExplorer = () => {
                   <button
                     disabled={page === 1}
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    className="px-3 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl border-2 border-gray-100 bg-white font-bold hover:bg-gray-50 disabled:opacity-30 transition-all text-xs sm:text-base flex items-center gap-1 sm:gap-2"
+                    className="cursor-pointer px-3 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl border-2 border-gray-100 bg-white font-bold hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all text-xs sm:text-base flex items-center gap-1 sm:gap-2"
                   >
                     <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                     <span className="hidden sm:inline">Précédent</span>
@@ -474,7 +527,7 @@ export const DishExplorer = () => {
                   </div>
                   <button
                     onClick={() => setPage((p) => p + 1)}
-                    className="px-3 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl border-2 border-gray-100 bg-white font-bold hover:bg-gray-50 transition-all text-xs sm:text-base flex items-center gap-1 sm:gap-2"
+                    className="cursor-pointer px-3 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl border-2 border-gray-100 bg-white font-bold hover:bg-gray-50 transition-all text-xs sm:text-base flex items-center gap-1 sm:gap-2"
                   >
                     <span className="hidden sm:inline">Suivant</span>
                     <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
