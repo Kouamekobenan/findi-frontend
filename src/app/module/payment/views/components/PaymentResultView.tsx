@@ -154,7 +154,6 @@ export default function PaymentResultView({
             </Link>
           </>
         )}
-
         {state === "pending" && (
           <>
             <AlertCircle className="w-16 h-16 text-orange-500 mx-auto" />
