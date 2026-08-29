@@ -32,9 +32,11 @@ export class RestaurantDishRepository implements IRestaurantDishRepository {
     limit: number,
     cityName: string
   ): Promise<PaginatedResult<RestaurantDish>> {
-    const url = `restaurantDish/paginate?page=${page}&limit=${limit}&countryName=${cityName}`;
+    const url = `restaurantDish/paginate`;
     try {
-      const response = await api.get(url);
+      const response = await api.get(url, {
+        params: { page, limit, countryName: cityName },
+      });
       return {
         data: response.data.data,
         total: response.data.total,
@@ -63,9 +65,11 @@ export class RestaurantDishRepository implements IRestaurantDishRepository {
     return response.data;
   }
   async findName(page: number, limit: number, dishName: string): Promise<PaginatedResult<RestaurantDish>> {
-     const url = `restaurantDish/dish?page=${page}&limit=${limit}&dishName=${dishName}`;
+     const url = `restaurantDish/dish`;
      try {
-       const response = await api.get(url);
+       const response = await api.get(url, {
+         params: { page, limit, dishName },
+       });
        return {
          data: response.data.data,
          total: response.data.total,

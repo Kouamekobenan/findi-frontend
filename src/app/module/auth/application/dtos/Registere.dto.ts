@@ -4,5 +4,6 @@ export interface RegisterDto{
     email:string,
     password:string,
     name:string,
+    phone:string,
     role:UseRole
 }

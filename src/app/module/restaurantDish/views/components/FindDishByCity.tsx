@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -17,10 +17,19 @@ import { FindDishByCityUsecase } from "../../application/usecases/find-dish-by-c
 import { RestaurantDish } from "../../domain/entities/restauDish.entity";
 import DishBanners from "@/app/composant/banniere/BanniereDish";
 import { FindDishByDishNameUsecase } from "../../application/usecases/find-restaurant-by-dish.usecase";
+import { DishRepository } from "@/app/module/dish/infrastructure/dish-repository";
+import { FindAllLinkedDishUsecase } from "@/app/module/dish/application/usecasese/find-all-linked-dish.usecase";
+import { Dish } from "@/app/module/dish/domain/entities/dish.entity";
+import { RestaurantRepository } from "@/app/module/restaurants/infrastructure/restaurant-repository";
+import { FindRestaurantUsecase } from "@/app/module/restaurants/application/usecases/find-restaurant.usecase";
 
 // Initialisation des UseCases
 const restauRepo = new RestaurantDishRepository();
 const findDishByUseCase = new FindDishByDishNameUsecase(restauRepo);
+const dishRepo = new DishRepository();
+const findAllLinkedDishUsecase = new FindAllLinkedDishUsecase(dishRepo);
+const restaurantRepo = new RestaurantRepository();
+const findRestaurantUsecase = new FindRestaurantUsecase(restaurantRepo);
 
 export const DishExplorer = () => {
   // États de données
@@ -41,7 +50,51 @@ export const DishExplorer = () => {
   const [cityQuery, setCityQuery] = useState(""); // Filtre ville (secondaire)
   const [page, setPage] = useState(1);
 
+  // Combobox ville
+  const cityFieldRef = useRef<HTMLDivElement>(null);
+  const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
+  const [highlightedCityIndex, setHighlightedCityIndex] = useState(-1);
+  const [allCities, setAllCities] = useState<string[]>([]);
+
+  // Suggestions de plats cliquables (catalogue)
+  const [suggestedDishes, setSuggestedDishes] = useState<Dish[]>([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+
   const limit = 10;
+
+  // Chargement des suggestions de plats depuis la base
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      setSuggestionsLoading(true);
+      try {
+        const allDishes = await findAllLinkedDishUsecase.execute();
+        setSuggestedDishes(allDishes || []);
+      } catch (err) {
+        console.error("Erreur lors de la récupération des suggestions :", err);
+      } finally {
+        setSuggestionsLoading(false);
+      }
+    };
+    fetchSuggestions();
+  }, []);
+
+  // Chargement de toutes les villes disponibles (tous restaurants confondus)
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        const response = await findRestaurantUsecase.execute(500, 1);
+        const unique = new Set<string>();
+        (response.data || []).forEach((restaurant) => {
+          const country = restaurant.country?.trim();
+          if (country) unique.add(country);
+        });
+        setAllCities(Array.from(unique).sort((a, b) => a.localeCompare(b)));
+      } catch (err) {
+        console.error("Erreur lors de la récupération des villes :", err);
+      }
+    };
+    fetchCities();
+  }, []);
 
   // Filtrage LOCAL par ville
   const filteredDishes = useMemo(() => {
@@ -52,6 +105,29 @@ export const DishExplorer = () => {
       item.restaurant?.country.toLowerCase().includes(trimmedQuery)
     );
   }, [dishes, cityQuery]);
+
+  // Filtrage du combobox ville : recherche texte en plus du défilement de la liste
+  const filteredCityOptions = useMemo(() => {
+    const trimmedQuery = cityQuery.trim().toLowerCase();
+    if (!trimmedQuery) return allCities;
+    return allCities.filter((city) =>
+      city.toLowerCase().includes(trimmedQuery)
+    );
+  }, [allCities, cityQuery]);
+
+  // Fermeture du dropdown ville au clic en dehors
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        cityFieldRef.current &&
+        !cityFieldRef.current.contains(event.target as Node)
+      ) {
+        setIsCityDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Appel API basé sur le plat
   useEffect(() => {
@@ -75,18 +151,54 @@ export const DishExplorer = () => {
   }, [page, activeDish]);
 
   // Handlers
+  const triggerSearch = (name: string) => {
+    if (!name.trim()) return;
+    setDishInput(name);
+    setActiveDish(name);
+    setPage(1);
+    setCityQuery("");
+    setHasSearched(true);
+  };
+
   const handleDishSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (dishInput.trim()) {
-      setActiveDish(dishInput);
-      setPage(1);
-      setCityQuery("");
-      setHasSearched(true);
-    }
+    triggerSearch(dishInput);
+  };
+
+  const handleSuggestionClick = (dish: Dish) => {
+    triggerSearch(dish.name);
   };
 
   const clearFilters = () => {
     setCityQuery("");
+    setIsCityDropdownOpen(false);
+    setHighlightedCityIndex(-1);
+  };
+
+  const selectCity = (city: string) => {
+    setCityQuery(city);
+    setIsCityDropdownOpen(false);
+    setHighlightedCityIndex(-1);
+  };
+
+  const handleCityKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!isCityDropdownOpen || filteredCityOptions.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightedCityIndex((prev) =>
+        Math.min(prev + 1, filteredCityOptions.length - 1)
+      );
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightedCityIndex((prev) => Math.max(prev - 1, 0));
+    } else if (e.key === "Enter") {
+      if (highlightedCityIndex >= 0 && filteredCityOptions[highlightedCityIndex]) {
+        e.preventDefault();
+        selectCity(filteredCityOptions[highlightedCityIndex]);
+      }
+    } else if (e.key === "Escape") {
+      setIsCityDropdownOpen(false);
+    }
   };
 
   return (
@@ -109,7 +221,7 @@ export const DishExplorer = () => {
           >
             {!hasSearched && (
               <div className="mb-8 sm:mb-10 animate-in fade-in zoom-in duration-700">
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 mb-3 sm:mb-4 px-4">
+                <h1 className="text-2xl sm:text-2xl lg:text-3xl font-extrabold text-gray-900 mb-3 sm:mb-4 px-4">
                   Qu'est-ce qu'on <span className="text-orange-500">mange</span>{" "}
                   aujourd'hui ?
                 </h1>
@@ -143,9 +255,54 @@ export const DishExplorer = () => {
               </div>
             </form>
 
+            {/* Suggestions de plats - choix par clic sur une image */}
+            {!hasSearched && (suggestionsLoading || suggestedDishes.length > 0) && (
+              <div className="mt-8 sm:mt-10 animate-in fade-in duration-700">
+                <p className="text-xs font-bold uppercase text-gray-400 mb-4 tracking-wide">
+                  Ou choisissez parmi nos suggestions
+                </p>
+                {suggestionsLoading ? (
+                  <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-2 px-1 justify-center">
+                    {[...Array(6)].map((_, i) => (
+                      <div key={i} className="flex flex-col items-center gap-2 shrink-0">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gray-200 animate-pulse" />
+                        <div className="w-12 h-3 rounded bg-gray-200 animate-pulse" />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-2 px-1 justify-start sm:justify-center">
+                    {suggestedDishes.map((dish) => (
+                      <button
+                        key={dish.id}
+                        type="button"
+                        onClick={() => handleSuggestionClick(dish)}
+                        className="flex flex-col items-center gap-2 shrink-0 group"
+                      >
+                        <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-gray-100 group-hover:border-orange-500 shadow-sm group-active:scale-95 transition-all">
+                          <Image
+                            src={dish.image || "/placeholder.png"}
+                            alt={dish.name}
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        </div>
+                        <span className="text-xs sm:text-sm font-semibold text-gray-700 group-hover:text-orange-500 capitalize max-w-20 truncate">
+                          {dish.name}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Filtre Ville - SECONDAIRE */}
             {hasSearched && (
-              <div className="w-full animate-in slide-in-from-right duration-500">
+              <div
+                className="w-full animate-in slide-in-from-right duration-500"
+                ref={cityFieldRef}
+              >
                 <label className="block text-xs font-bold uppercase text-orange-500 mb-2 ml-1">
                   Dans quelle ville ?
                 </label>
@@ -153,18 +310,50 @@ export const DishExplorer = () => {
                   <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-400 w-5 h-5" />
                   <input
                     type="text"
+                    role="combobox"
+                    aria-expanded={isCityDropdownOpen}
+                    aria-autocomplete="list"
+                    autoComplete="off"
                     className="w-full pl-12 pr-20 py-3 sm:py-4 rounded-2xl border-2 border-orange-100 focus:border-orange-500 outline-none transition-all shadow-sm bg-orange-50/30 text-base sm:text-lg"
                     placeholder="Abidjan, Yamoussoukro, Bouaké..."
                     value={cityQuery}
-                    onChange={(e) => setCityQuery(e.target.value)}
+                    onChange={(e) => {
+                      setCityQuery(e.target.value);
+                      setIsCityDropdownOpen(true);
+                      setHighlightedCityIndex(-1);
+                    }}
+                    onFocus={() => setIsCityDropdownOpen(true)}
+                    onKeyDown={handleCityKeyDown}
                   />
                   {cityQuery && (
                     <button
+                      type="button"
                       onClick={clearFilters}
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-500 transition-colors"
                     >
                       <X className="w-5 h-5" />
                     </button>
+                  )}
+
+                  {isCityDropdownOpen && filteredCityOptions.length > 0 && (
+                    <ul className="absolute left-0 right-0 z-40 mt-2 max-h-60 overflow-y-auto rounded-2xl border-2 border-orange-100 bg-white shadow-lg py-2">
+                      {filteredCityOptions.map((city, index) => (
+                        <li key={city}>
+                          <button
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => selectCity(city)}
+                            className={`w-full text-left px-4 py-2 sm:py-2.5 text-sm sm:text-base capitalize transition-colors ${
+                              index === highlightedCityIndex
+                                ? "bg-orange-50 text-orange-600"
+                                : "text-gray-700 hover:bg-orange-50 hover:text-orange-600"
+                            }`}
+                          >
+                            {city}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
                   )}
                 </div>
               </div>
@@ -172,7 +361,6 @@ export const DishExplorer = () => {
           </div>
         </div>
       </section>
-
       {/* RÉSULTATS */}
       {hasSearched && (
         <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
@@ -230,7 +418,7 @@ export const DishExplorer = () => {
                           {dish.dish?.name}
                         </h3>
                         <div className="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-sm font-medium text-orange-600 mb-2 sm:mb-6 bg-orange-50 w-fit px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-md sm:rounded-lg">
-                          <Store className="w-2.5 h-2.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                          <Store className="w-2.5 h-2.5 sm:w-4 sm:h-4 shrink-0" />
                           <span className="line-clamp-1">
                             {dish.restaurant?.name}
                           </span>

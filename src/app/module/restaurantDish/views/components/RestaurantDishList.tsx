@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import Image from "next/image";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   MapPin,
   Phone,
@@ -14,11 +14,14 @@ import {
   AlertCircle,
   Search,
   X,
+  ShoppingCart,
 } from "lucide-react";
 import { RestaurantDishRepository } from "../../infrastructure/restaurantDish-repository";
 import { FindRestauDishUseCase } from "../../application/usecases/find-restauDish.usecase";
 import { RestaurantDish } from "../../domain/entities/restauDish.entity";
 import DishBanner from "@/app/composant/banniere/Banniere";
+import { useAuth } from "@/app/context/AuthContext";
+import OrderPaymentModal from "@/app/module/order/views/components/OrderPaymentModal";
 
 const restauDishRepo = new RestaurantDishRepository();
 const findRestauDishUseCase = new FindRestauDishUseCase(restauDishRepo);
@@ -29,8 +32,21 @@ export default function RestaurantDishList() {
   );
   const [searchQuery, setSearchQuery] = useState("");
   const params = useParams();
+  const router = useRouter();
   const id = params.id as string;
   const [loading, setLoading] = useState(true);
+  const { isAuthenticated } = useAuth();
+  const [orderingItem, setOrderingItem] = useState<RestaurantDish | null>(null);
+
+  const handleOrder = (item: RestaurantDish) => {
+    if (!isAuthenticated) {
+      router.push(
+        `/module/auth/views/login?redirect=/module/restaurantDish/views/page/${id}`
+      );
+      return;
+    }
+    setOrderingItem(item);
+  };
 
   useEffect(() => {
     const fetchRestaurantDish = async (id: string) => {
@@ -141,7 +157,7 @@ export default function RestaurantDishList() {
         <section className="bg-white rounded-2xl shadow-lg overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
             {/* Image du restaurant */}
-            <div className="relative h-64 sm:h-80 lg:h-full min-h-[300px]">
+            <div className="hidden sm:block relative sm:h-80 lg:h-full min-h-[300px]">
               <Image
                 src={restaurant?.image || "/placeholder.jpg"}
                 alt={restaurant?.name || "Restaurant"}
@@ -149,11 +165,10 @@ export default function RestaurantDishList() {
                 className="object-cover"
                 priority
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent lg:hidden" />
             </div>
 
-            {/* Informations du restaurant */}
-            <div className="p-6 sm:p-8 lg:p-10 flex flex-col justify-center space-y-6">
+            {/* Informations du restaurant (masquées sur mobile, visibles à partir de sm) */}
+            <div className="hidden sm:flex p-6 sm:p-8 lg:p-10 flex-col justify-center space-y-6">
               {/* Nom et description */}
               <div className="space-y-3">
                 <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight">
@@ -167,14 +182,18 @@ export default function RestaurantDishList() {
               {/* Coordonnées */}
               <div className="space-y-3">
                 <div className="flex items-start gap-3 text-gray-700">
-                  <MapPin className="w-5 h-5 text-orange-500 flex-shrink-0 mt-1" />
-                  <span className="text-sm sm:text-base">
+                  <span className="flex-shrink-0 mt-0.5 bg-orange-50 text-orange-500 rounded-full p-2">
+                    <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </span>
+                  <span className="text-sm sm:text-base pt-1.5">
                     {restaurant?.address}
                   </span>
                 </div>
 
                 <div className="flex items-center gap-3 text-gray-700">
-                  <Phone className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                  <span className="flex-shrink-0 bg-orange-50 text-orange-500 rounded-full p-2">
+                    <Phone className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </span>
                   <a
                     href={`tel:${restaurant?.phone}`}
                     className="text-sm sm:text-base hover:text-orange-500 transition-colors"
@@ -185,7 +204,9 @@ export default function RestaurantDishList() {
 
                 {restaurant?.website && (
                   <div className="flex items-center gap-3">
-                    <Globe className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                    <span className="flex-shrink-0 bg-orange-50 text-orange-500 rounded-full p-2">
+                      <Globe className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </span>
                     <a
                       href={restaurant.website}
                       target="_blank"
@@ -278,7 +299,7 @@ export default function RestaurantDishList() {
                 {filteredDishes.map((item) => (
                   <div
                     key={item.id}
-                    className="group bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-xl hover:border-orange-200 transition-all duration-300"
+                    className="group bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-sm hover:border-orange-200 transition-all duration-300"
                   >
                     {/* Image du plat */}
                     <div className="relative h-28 sm:h-52 w-full overflow-hidden bg-gray-100">
@@ -320,12 +341,22 @@ export default function RestaurantDishList() {
                           "Délicieux plat préparé avec soin"}
                       </p>
 
-                      {/* Prix */}
-                      <div className="pt-0 border-t border-gray-100">
-                        <span className="text-2xl font-bold text-green-600">
+                      {/* Prix et commande */}
+                      <div className="pt-3 border-t border-gray-100 flex items-center justify-between gap-2">
+                        <span className="text-base sm:text-2xl font-bold text-green-600 whitespace-nowrap">
                           {item.price}{" "}
-                          <span className="text-base">{item.currency}</span>
+                          <span className="text-xs sm:text-base font-semibold">
+                            {item.currency}
+                          </span>
                         </span>
+                        <button
+                          onClick={() => handleOrder(item)}
+                          disabled={!item.isAvailable}
+                          className="flex items-center gap-1.5 cursor-pointer bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-2 px-3 sm:px-4 rounded-full transition-all active:scale-95 shadow-sm hover:shadow-md text-xs sm:text-sm shrink-0"
+                        >
+                          <ShoppingCart className="w-4 h-4" />
+                          <span className="hidden sm:inline">Commander</span>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -334,12 +365,19 @@ export default function RestaurantDishList() {
             )}
           </div>
         </section>
-
         {/* Footer optionnel */}
         <div className="text-center py-8 text-gray-500 text-sm">
-          <p>Bon appétit ! 🍽️</p>
+          <p>Bon appétit !</p>
         </div>
       </div>
+
+      {orderingItem && (
+        <OrderPaymentModal
+          item={orderingItem}
+          restaurantId={restaurant?.id || ""}
+          onClose={() => setOrderingItem(null)}
+        />
+      )}
     </div>
   );
 }

@@ -23,11 +23,11 @@ export default function LoginUser() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState<LoginDto>({
-    email: "",
+    phone: "",
     password: "",
   });
   const [errors, setErrors] = useState({
-    email: "",
+    phone: "",
     password: "",
     general: "",
   });
@@ -35,14 +35,14 @@ export default function LoginUser() {
   const router = useRouter();
   const { login } = useAuth();
   const validateForm = (): boolean => {
-    const newErrors = { email: "", password: "", general: "" };
+    const newErrors = { phone: "", password: "", general: "" };
     let isValid = true;
 
-    if (!formData.email.trim()) {
-      newErrors.email = "Le numéro de téléphone est requis";
+    if (!formData.phone.trim()) {
+      newErrors.phone = "Le numéro de téléphone est requis";
       isValid = false;
-    } else if (formData.email.length < 8) {
-      newErrors.email = "Numéro de téléphone invalide";
+    } else if (formData.phone.length < 8) {
+      newErrors.phone = "Numéro de téléphone invalide";
       isValid = false;
     }
 
@@ -76,9 +76,9 @@ export default function LoginUser() {
       return;
     }
     setIsLoading(true);
-    setErrors({ email: "", password: "", general: "" });
+    setErrors({ phone: "", password: "", general: "" });
     try {
-      const loggedUser = await login(formData.email, formData.password);
+      const loggedUser = await login(formData.phone, formData.password);
       switch (loggedUser.role) {
         case "RESTAURATEUR":
           toast.success("Vous êtes connectez avec succès!");
@@ -150,31 +150,31 @@ export default function LoginUser() {
                 htmlFor="phone"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
-                Votre email
+                Votre numéro de téléphone
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <Phone className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  value={formData.phone}
                   onChange={handleChange}
                   onKeyPress={handleKeyPress}
                   className={`w-full pl-12 pr-4 py-3 border rounded-xl bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200 ${
-                    errors.email
+                    errors.phone
                       ? "border-red-300 dark:border-red-600"
                       : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
                   } dark:text-white placeholder-gray-500 dark:placeholder-gray-400`}
-                  placeholder="Votre addresse email"
+                  placeholder="+2250700000000"
                   disabled={isLoading}
                 />
               </div>
-              {errors.email && (
+              {errors.phone && (
                 <p className="mt-2 text-sm text-red-600 dark:text-red-400">
-                  {errors.email}
+                  {errors.phone}
                 </p>
               )}
             </div>

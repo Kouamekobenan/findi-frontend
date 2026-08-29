@@ -30,4 +30,10 @@ export class DishRepository implements IDishRepository {
     const response = await api.get(url);
     return response.data;
   }
+
+  async getAllLinkedToRestaurant(): Promise<Dish[]> {
+    const url = `/dish/linked`;
+    const response = await api.get(url);
+    return response.data;
+  }
 }

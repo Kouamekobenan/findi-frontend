@@ -4,6 +4,7 @@ import {
   User,
   Mail,
   Lock,
+  Phone,
   Eye,
   EyeOff,
   CheckCircle,
@@ -25,6 +26,7 @@ export default function RegisterForm() {
     email: "",
     password: "",
     name: "",
+    phone: "",
     role: UseRole.ADMIN,
   });
   // J'ai mis le LOGO_SRC ici pour la clarté, mais il peut rester en dehors.
@@ -65,6 +67,11 @@ export default function RegisterForm() {
           error = "Le mot de passe doit contenir au moins 6 caractères";
         }
         break;
+      case "phone":
+        if (!/^\+?[0-9]{8,15}$/.test(value)) {
+          error = "Numéro de téléphone invalide (8 à 15 chiffres)";
+        }
+        break;
     }
     setErrors((prev) => ({ ...prev, [name]: error }));
     return error === "";
@@ -93,8 +100,9 @@ export default function RegisterForm() {
     const isEmailValid = validateField("email", formData.email);
     const isPasswordValid = validateField("password", formData.password);
     const isNameValid = validateField("name", formData.name);
+    const isPhoneValid = validateField("phone", formData.phone);
 
-    if (!isNameValid || !isEmailValid || !isPasswordValid) {
+    if (!isNameValid || !isEmailValid || !isPasswordValid || !isPhoneValid) {
       toast.error("Veuillez corriger les erreurs dans le formulaire.");
       setLoading(false);
       return;
@@ -105,7 +113,7 @@ export default function RegisterForm() {
         name: formData.name.trim(),
         email: formData.email.trim().toLowerCase(),
         password: formData.password,
-
+        phone: formData.phone.trim(),
         role: formData.role,
         // refreshToken: formData.refreshToken,
       };
@@ -125,6 +133,7 @@ export default function RegisterForm() {
           name: "",
           email: "",
           password: "",
+          phone: "",
           role: UseRole.ADMIN,
         });
       }, 500);
@@ -217,6 +226,27 @@ export default function RegisterForm() {
                 )}
               </div>
               {/* Téléphone */}
+              <div className="relative">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Numéro de téléphone
+                </label>
+                <Phone className="absolute left-3 top-[37px] w-5 h-5 text-gray-400" />
+                <input
+                  type="tel"
+                  name="phone"
+                  placeholder="+2250700000000"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className={inputClass("phone")}
+                  required
+                />
+                {errors.phone && (
+                  <p className="mt-1 text-xs text-red-600 flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {errors.phone}
+                  </p>
+                )}
+              </div>
 
               {/* Mot de passe */}
               <div className="relative">

@@ -13,7 +13,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   loading: boolean;
-  login: (email: string, password: string) => Promise<User>;
+  login: (phone: string, password: string) => Promise<User>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -40,10 +40,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   // ✅ CORRECTION : Adapter à la structure réelle de votre backend
-  const login = async (email: string, password: string): Promise<User> => {
+  const login = async (phone: string, password: string): Promise<User> => {
     try {
-      const res = await api.post(`/auth/login`, { email, password });
-     
+      const res = await api.post(`/auth/login`, { phone, password });
+
       const { user, token } = res.data;
       const { access_token } = token;
       saveTokens(access_token, undefined, user.id);
