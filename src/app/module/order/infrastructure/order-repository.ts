@@ -2,6 +2,7 @@ import { api } from "@/app/prisma/api";
 import { Order } from "../domain/entities/order.entity";
 import { IOrderRepository } from "../domain/interfaces/order-repository.interface";
 import { CreateOrderDto } from "../application/dtos/create-order.dto";
+import { PaginatedResult } from "@/app/module/common/type-generique";
 
 export class OrderRepository implements IOrderRepository {
   async create(dto: CreateOrderDto): Promise<Order> {
@@ -22,6 +23,20 @@ export class OrderRepository implements IOrderRepository {
       return response.data;
     } catch (error) {
       console.error(`[OrderRepository] Error fetching order ${id}:`, error);
+      throw error;
+    }
+  }
+
+  async paginateByUser(
+    page: number,
+    limit: number
+  ): Promise<PaginatedResult<Order>> {
+    const url = "orders";
+    try {
+      const response = await api.get(url, { params: { page, limit } });
+      return response.data;
+    } catch (error) {
+      console.error("[OrderRepository] Error paginating orders:", error);
       throw error;
     }
   }

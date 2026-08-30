@@ -10,6 +10,7 @@ export class User {
     public role: UseRole,
     public createdAt: Date,
     public updatedAt: Date,
-    public restaurants?: Restaurant[]
+    public restaurants?: Restaurant[],
+    public phone?: string | null
   ) {}
 }

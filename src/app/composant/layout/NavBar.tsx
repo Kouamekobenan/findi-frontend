@@ -13,6 +13,7 @@ import {
   Home,
   UserCircle,
   MessageCircle,
+  ShieldCheck,
 } from "lucide-react";
 import Image from "next/image";
 import { LogoFindi, NameApp } from "@/app/lib/constant/constant";
@@ -130,12 +131,19 @@ export function NavBar() {
                           Mon Compte
                         </p>
                       </div>
+                      <Link
+                        href="/module/auth/views/profile"
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 transition-colors"
+                      >
+                        <User size={16} /> Mon profil
+                      </Link>
+
                       {user.role === "ADMIN" && (
                         <Link
                           href="/module/admin"
                           className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 transition-colors"
                         >
-                          <User size={16} /> Mon profil
+                          <ShieldCheck size={16} /> Tableau de bord
                         </Link>
                       )}
 
@@ -308,14 +316,23 @@ export function NavBar() {
 
               {/* Menu Items */}
               <div className="space-y-2">
+                <Link
+                  href="/module/auth/views/profile"
+                  className="flex items-center gap-3 p-4 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <User size={20} />
+                  <span className="font-semibold">Mon profil</span>
+                </Link>
+
                 {user.role === "ADMIN" && (
                   <Link
                     href="/module/admin"
                     className="flex items-center gap-3 p-4 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <User size={20} />
-                    <span className="font-semibold">Mon profil</span>
+                    <ShieldCheck size={20} />
+                    <span className="font-semibold">Tableau de bord</span>
                   </Link>
                 )}
 

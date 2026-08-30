@@ -10,6 +10,8 @@ export interface OrderItem {
   quantity: number;
   unitPriceCents: number;
   currency: string;
+  dishName: string | null;
+  dishImage: string | null;
 }
 
 export interface Order {
@@ -25,4 +27,6 @@ export interface Order {
   createdAt: string;
   updatedAt: string;
   items: OrderItem[];
+  restaurantName: string | null;
+  restaurantImage: string | null;
 }
