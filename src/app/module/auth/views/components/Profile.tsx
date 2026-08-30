@@ -13,36 +13,42 @@ import {
   ChevronLeft,
   ChevronRight,
   ShoppingBag,
+  Wallet,
 } from "lucide-react";
 import { useAuth } from "@/app/context/AuthContext";
 import { OrderRepository } from "@/app/module/order/infrastructure/order-repository";
 import { ListMyOrdersUseCase } from "@/app/module/order/application/usecases/list-my-orders.usecase";
-import { Order, OrderStatus } from "@/app/module/order/domain/entities/order.entity";
+import {
+  Order,
+  OrderStatus,
+} from "@/app/module/order/domain/entities/order.entity";
 import { safeImageUrl } from "@/app/module/common/safe-image-url";
+import PayOrderModal from "@/app/module/order/views/components/PayOrderModal";
 
 const orderRepository = new OrderRepository();
 const listMyOrdersUseCase = new ListMyOrdersUseCase(orderRepository);
 
 const LIMIT = 5;
 
-const STATUS_STYLES: Record<OrderStatus, { label: string; className: string }> = {
-  PENDING_PAYMENT: {
-    label: "En attente de paiement",
-    className: "bg-orange-50 text-orange-600 border-orange-200",
-  },
-  PAID: {
-    label: "Payée",
-    className: "bg-green-50 text-green-600 border-green-200",
-  },
-  PAYMENT_FAILED: {
-    label: "Paiement échoué",
-    className: "bg-red-50 text-red-600 border-red-200",
-  },
-  CANCELLED: {
-    label: "Annulée",
-    className: "bg-gray-100 text-gray-500 border-gray-200",
-  },
-};
+const STATUS_STYLES: Record<OrderStatus, { label: string; className: string }> =
+  {
+    PENDING_PAYMENT: {
+      label: "En attente de paiement",
+      className: "bg-orange-50 text-orange-600 border-orange-200",
+    },
+    PAID: {
+      label: "Payée",
+      className: "bg-green-50 text-green-600 border-green-200",
+    },
+    PAYMENT_FAILED: {
+      label: "Paiement échoué",
+      className: "bg-red-50 text-red-600 border-red-200",
+    },
+    CANCELLED: {
+      label: "Annulée",
+      className: "bg-gray-100 text-gray-500 border-gray-200",
+    },
+  };
 
 function StatusBadge({ status }: { status: OrderStatus }) {
   const style = STATUS_STYLES[status];
@@ -56,6 +62,7 @@ function StatusBadge({ status }: { status: OrderStatus }) {
 }
 
 function OrderCard({ order }: { order: Order }) {
+  const [showPayModal, setShowPayModal] = useState(false);
   const date = new Date(order.createdAt).toLocaleDateString("fr-FR", {
     day: "2-digit",
     month: "long",
@@ -98,11 +105,27 @@ function OrderCard({ order }: { order: Order }) {
       </div>
 
       <div className="flex items-center justify-between border-t border-gray-100 pt-3">
-        <span className="text-xs text-gray-400 font-mono">{order.reference}</span>
+        <span className="text-xs text-gray-400 font-mono">
+          {order.reference}
+        </span>
         <span className="font-bold text-gray-900">
           {order.totalAmountCents / 100} {order.currency}
         </span>
       </div>
+
+      {order.status === "PENDING_PAYMENT" && (
+        <button
+          onClick={() => setShowPayModal(true)}
+          className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 rounded-xl transition-all active:scale-95 cursor-pointer"
+        >
+          <Wallet className="w-4 h-4" />
+          Payer maintenant
+        </button>
+      )}
+
+      {showPayModal && (
+        <PayOrderModal order={order} onClose={() => setShowPayModal(false)} />
+      )}
     </div>
   );
 }
@@ -117,7 +140,9 @@ export default function Profile() {
 
   useEffect(() => {
     if (!user) {
-      router.push("/module/auth/views/login?redirect=/module/auth/views/profile");
+      router.push(
+        "/module/auth/views/login?redirect=/module/auth/views/profile",
+      );
     }
   }, [user, router]);
 
@@ -148,7 +173,7 @@ export default function Profile() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-24 md:pb-4">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 md:py-12 space-y-8">
         {/* Carte profil */}
         <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
@@ -158,13 +183,17 @@ export default function Profile() {
             </div>
             <div className="flex-1 min-w-0 space-y-2">
               <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <h1 className="text-2xl font-bold text-gray-900">{user.name}</h1>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  {user.name}
+                </h1>
                 <span className="inline-flex items-center gap-1 text-xs font-bold text-orange-600 bg-orange-50 border border-orange-200 rounded-full px-2.5 py-1 w-fit mx-auto sm:mx-0">
                   <ShieldCheck size={12} />
                   {user.role}
                 </span>
               </div>
-              <p className="text-sm text-gray-400">Membre depuis {memberSince}</p>
+              <p className="text-sm text-gray-400">
+                Membre depuis {memberSince}
+              </p>
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 pt-2">
                 {user.email && (
                   <span className="flex items-center justify-center sm:justify-start gap-2 text-sm text-gray-600">

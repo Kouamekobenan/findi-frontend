@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { X, Minus, Plus, Loader2, AlertCircle } from "lucide-react";
+import Link from "next/link";
+import { X, Minus, Plus, Loader2, AlertCircle, CheckCircle2, Clock } from "lucide-react";
 import { RestaurantDish } from "@/app/module/restaurantDish/domain/entities/restauDish.entity";
 import { OrderRepository } from "@/app/module/order/infrastructure/order-repository";
 import { CreateOrderUseCase } from "@/app/module/order/application/usecases/create-order.usecase";
@@ -27,19 +28,23 @@ interface OrderPaymentModalProps {
   onClose: () => void;
 }
 
+type PaymentTiming = "now" | "later";
+
 export default function OrderPaymentModal({
   item,
   restaurantId,
   onClose,
 }: OrderPaymentModalProps) {
   const [quantity, setQuantity] = useState(1);
+  const [timing, setTiming] = useState<PaymentTiming>("now");
   const [method, setMethod] = useState<PaymentMethod | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [orderConfirmed, setOrderConfirmed] = useState(false);
 
   const total = item.price * quantity;
 
-  const handlePay = async () => {
+  const handlePayNow = async () => {
     if (!method) {
       setError("Choisissez un moyen de paiement pour continuer");
       return;
@@ -68,6 +73,62 @@ export default function OrderPaymentModal({
       setSubmitting(false);
     }
   };
+
+  const handlePayLater = async () => {
+    setError(null);
+    setSubmitting(true);
+    try {
+      await createOrderUseCase.execute({
+        restaurantId,
+        items: [{ restaurantDishId: item.id, quantity }],
+      });
+      setOrderConfirmed(true);
+    } catch (err: any) {
+      setError(
+        err?.response?.data?.message ||
+          "Une erreur est survenue lors de la création de la commande"
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSubmit = () => {
+    if (timing === "now") {
+      handlePayNow();
+    } else {
+      handlePayLater();
+    }
+  };
+
+  if (orderConfirmed) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4">
+        <div className="w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden p-8 text-center space-y-5">
+          <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto" />
+          <h3 className="text-xl font-bold text-gray-900">Commande confirmée</h3>
+          <p className="text-gray-600 text-sm">
+            Vous pourrez finaliser le paiement à tout moment (par exemple à la
+            livraison) depuis votre profil.
+          </p>
+          <div className="flex flex-col gap-2">
+            <Link
+              href="/module/auth/views/profile"
+              className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-full transition-all"
+            >
+              Voir mes commandes
+            </Link>
+            <button
+              onClick={onClose}
+              className="text-gray-500 font-medium py-2 cursor-pointer"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4">
@@ -127,37 +188,95 @@ export default function OrderPaymentModal({
             </div>
           </div>
 
-          {/* Moyen de paiement */}
+          {/* Choix du moment de paiement */}
           <div className="space-y-3">
             <span className="font-medium text-gray-700 text-sm">
-              Moyen de paiement
+              Quand souhaitez-vous payer ?
             </span>
-            <div className="grid grid-cols-1 gap-2">
-              {PAYMENT_METHODS.map((option) => (
-                <label
-                  key={option.value}
-                  className={`flex items-center gap-3 border rounded-xl px-4 py-3 cursor-pointer transition-all ${
-                    method === option.value
-                      ? "border-orange-500 bg-orange-50 ring-1 ring-orange-500"
-                      : "border-gray-200 hover:border-gray-300"
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setTiming("now")}
+                disabled={submitting}
+                className={`flex flex-col items-center gap-1.5 border rounded-xl py-3 transition-all cursor-pointer ${
+                  timing === "now"
+                    ? "border-orange-500 bg-orange-50 ring-1 ring-orange-500"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <CheckCircle2
+                  className={`w-5 h-5 ${
+                    timing === "now" ? "text-orange-600" : "text-gray-400"
                   }`}
-                >
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value={option.value}
-                    checked={method === option.value}
-                    onChange={() => setMethod(option.value)}
-                    disabled={submitting}
-                    className="accent-orange-500"
-                  />
-                  <span className="text-sm font-medium text-gray-800">
-                    {option.label}
-                  </span>
-                </label>
-              ))}
+                />
+                <span className="text-sm font-semibold text-gray-800">
+                  Payer maintenant
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setTiming("later")}
+                disabled={submitting}
+                className={`flex flex-col items-center gap-1.5 border rounded-xl py-3 transition-all cursor-pointer ${
+                  timing === "later"
+                    ? "border-orange-500 bg-orange-50 ring-1 ring-orange-500"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <Clock
+                  className={`w-5 h-5 ${
+                    timing === "later" ? "text-orange-600" : "text-gray-400"
+                  }`}
+                />
+                <span className="text-sm font-semibold text-gray-800">
+                  Payer à la livraison
+                </span>
+              </button>
             </div>
           </div>
+
+          {/* Moyen de paiement (uniquement si paiement immédiat) */}
+          {timing === "now" ? (
+            <div className="space-y-3">
+              <span className="font-medium text-gray-700 text-sm">
+                Moyen de paiement
+              </span>
+              <div className="grid grid-cols-1 gap-2">
+                {PAYMENT_METHODS.map((option) => (
+                  <label
+                    key={option.value}
+                    className={`flex items-center gap-3 border rounded-xl px-4 py-3 cursor-pointer transition-all ${
+                      method === option.value
+                        ? "border-orange-500 bg-orange-50 ring-1 ring-orange-500"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value={option.value}
+                      checked={method === option.value}
+                      onChange={() => setMethod(option.value)}
+                      disabled={submitting}
+                      className="accent-orange-500"
+                    />
+                    <span className="text-sm font-medium text-gray-800">
+                      {option.label}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-start gap-2 text-sm text-gray-600 bg-gray-50 border border-gray-100 rounded-xl p-3">
+              <Clock className="w-4 h-4 flex-shrink-0 mt-0.5 text-gray-400" />
+              <span>
+                Votre commande sera enregistrée sans paiement immédiat. Vous
+                pourrez payer à tout moment (par exemple à la livraison)
+                depuis votre profil.
+              </span>
+            </div>
+          )}
 
           {error && (
             <div className="flex items-start gap-2 text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl p-3">
@@ -176,12 +295,16 @@ export default function OrderPaymentModal({
             </span>
           </div>
           <button
-            onClick={handlePay}
+            onClick={handleSubmit}
             disabled={submitting}
             className="w-full flex cursor-pointer items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-bold py-3 rounded-full transition-all active:scale-95"
           >
             {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-            {submitting ? "Redirection en cours..." : "Payer maintenant"}
+            {submitting
+              ? "Traitement en cours..."
+              : timing === "now"
+                ? "Payer maintenant"
+                : "Confirmer la commande"}
           </button>
         </div>
       </div>
