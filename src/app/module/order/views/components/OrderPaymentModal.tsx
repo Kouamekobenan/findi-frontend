@@ -15,6 +15,7 @@ import {
 } from "@/app/module/payment/domain/entities/payment.entity";
 import { PENDING_ORDER_STORAGE_KEY } from "@/app/module/order/views/constants";
 import { safeImageUrl } from "@/app/module/common/safe-image-url";
+import PaymentMethodIcon from "@/app/module/payment/views/components/PaymentMethodIcon";
 
 const orderRepository = new OrderRepository();
 const createOrderUseCase = new CreateOrderUseCase(orderRepository);
@@ -260,6 +261,7 @@ export default function OrderPaymentModal({
                       disabled={submitting}
                       className="accent-orange-500"
                     />
+                    <PaymentMethodIcon method={option.value} size={36} />
                     <span className="text-sm font-medium text-gray-800">
                       {option.label}
                     </span>

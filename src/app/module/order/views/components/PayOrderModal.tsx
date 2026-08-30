@@ -10,6 +10,7 @@ import {
   PaymentMethod,
 } from "@/app/module/payment/domain/entities/payment.entity";
 import { PENDING_ORDER_STORAGE_KEY } from "@/app/module/order/views/constants";
+import PaymentMethodIcon from "@/app/module/payment/views/components/PaymentMethodIcon";
 
 const paymentRepository = new PaymentRepository();
 const initiatePaymentUseCase = new InitiatePaymentUseCase(paymentRepository);
@@ -96,6 +97,7 @@ export default function PayOrderModal({ order, onClose }: PayOrderModalProps) {
                     disabled={submitting}
                     className="accent-orange-500"
                   />
+                  <PaymentMethodIcon method={option.value} size={36} />
                   <span className="text-sm font-medium text-gray-800">
                     {option.label}
                   </span>
